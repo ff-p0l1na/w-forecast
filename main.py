@@ -5,13 +5,22 @@ import re
 import requests
 # data YYYY-mm-dd w postaci regular expression
 date_pattern = re.compile(r'^\d{4}-(?:0[1-9]|1[0-2])-([012]\d|3[01])$')
-#
+
+
 class WeatherForecast:
-    def __init__(self, input_file):
-        self.input_file = input_file
+    def __init__(self, the_file):
+        self.the_file = the_file
         self.weather_forecast = self.get_result_from_file()
 
-    def get_rain_sum(self, date=None):
+    def get_result_from_file(self):
+        if not os.path.exists(self.the_file):
+            forecast = {}
+        else:
+            with open(self.the_file, "r") as f:
+                forecast = json.load(f)
+        return forecast
+
+    def get_result_from_api(self, date=None):
         LATITUDE = 60.39
         LONGITUDE = 5.32
         today = datetime.date.today()
@@ -35,16 +44,8 @@ class WeatherForecast:
             'rain_sum': resp
         }
 
-    def get_result_from_file(self):
-        if not os.path.exists(self.input_file):
-            forecast = {}
-        else:
-            with open(self.input_file, "r") as f:
-                forecast = json.load(f)
-        return forecast
-
     def save_result_to_file(self):
-        with open(self.input_file, 'w') as f:
+        with open(self.the_file, 'w') as f:
             json.dump(self.weather_forecast, f)
 
     def __getitem__(self, date):
@@ -60,7 +61,7 @@ class WeatherForecast:
 
     def items(self):
         for date, rain_sum in self.weather_forecast.items():
-            yield (date, rain_sum)
+            yield date, rain_sum
 
     def __iter__(self):
         dates = list(self.weather_forecast.keys())
@@ -68,9 +69,9 @@ class WeatherForecast:
 
 
 input_file = 'fallback.json'
+wf = WeatherForecast(the_file=input_file)
 
-wf = WeatherForecast(input_file=input_file)
-wf.get_rain_sum()
+
 
 # weather_forecast[date]  # da odpowiedź na temat pogody dla podanej daty
 # weather_forecast.items()  # zwróci generator tupli w formacie (data, pogoda) dla już zapisanych rezultatów przy wywołaniu
