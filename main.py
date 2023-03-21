@@ -3,7 +3,8 @@ import json
 import os
 import re
 import requests
-# data YYYY-mm-dd w postaci regular expression
+
+# data YYYY-mm-dd w postaci regular expression:
 date_pattern = re.compile(r'^\d{4}-(?:0[1-9]|1[0-2])-([012]\d|3[01])$')
 
 
@@ -24,6 +25,7 @@ class WeatherForecast:
         LATITUDE = 60.39
         LONGITUDE = 5.32
         today = datetime.date.today()
+        date = date
         if not date:
             date = input("Podaj datę (YYYY-mm-dd): \n")
             if not date:
@@ -38,6 +40,12 @@ class WeatherForecast:
               f"Europe%2FLondon&start_date={date}" \
               f"&end_date={date}"
         resp = requests.get(url).json()['daily']['rain_sum'][0]
+        if resp > 0:
+            print("Będzie padać.")
+        elif resp == 0:
+            print("Nie będzie padać.")
+        else:
+            print("Nie wiem.")
 
         return {
             'date': date,
@@ -46,13 +54,18 @@ class WeatherForecast:
 
     def save_result_to_file(self):
         with open(self.the_file, 'w') as f:
-            json.dump(self.weather_forecast, f)
+            data_to_save = WeatherForecast.get_result_from_api()
+            json.dump(data_to_save, f)
+
 
     def __getitem__(self, date):
         if date not in self.weather_forecast:
             api_based_forecast = self.get_result_from_api(date)
-            self.weather_forecast[date] = [api_based_forecast['date'], api_based_forecast['rain_sum']]
-            self.save_result_to_file()
+            if api_based_forecast:
+                self.weather_forecast[date] = [api_based_forecast['date'], api_based_forecast['rain_sum']]
+                self.save_result_to_file()
+            else:
+                return None
         return self.weather_forecast[date]
 
     def __setitem__(self, date, rain_sum):
@@ -69,8 +82,11 @@ class WeatherForecast:
 
 
 input_file = 'fallback.json'
-wf = WeatherForecast(the_file=input_file)
-
+weather_forecast = WeatherForecast(the_file=input_file)
+weather_forecast.get_result_from_file()
+weather_forecast.get_result_from_api()
+weather_forecast.save_result_to_file()
+exit()
 
 
 # weather_forecast[date]  # da odpowiedź na temat pogody dla podanej daty
