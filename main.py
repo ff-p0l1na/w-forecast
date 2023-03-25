@@ -34,7 +34,7 @@ class WeatherForecast:
             date_valid = date_pattern.match(str(date))
             if not date_valid:
                 print("Podano nieprawidłową datę. Spróbuj ponownie.\n")
-                pass
+                return False
         url = f"https://api.open-meteo.com/v1/forecast?latitude={LATITUDE}&" \
               f"longitude={LONGITUDE}&hourly=rain&daily=rain_sum&timezone=" \
               f"Europe%2FLondon&start_date={date}" \
@@ -47,16 +47,16 @@ class WeatherForecast:
         else:
             print("Nie wiem.")
 
-        return {
-            'date': date,
-            'rain_sum': resp
-        }
+        self.weather_forecast[date] = resp
+
+        return {str(date): float(resp)}
 
     def save_result_to_file(self):
+        data_to_save = {}
+        for date, rain_sum in self.weather_forecast.items():
+            data_to_save[str(date)] = rain_sum
         with open(self.the_file, 'w') as f:
-            data_to_save = WeatherForecast.get_result_from_api()
             json.dump(data_to_save, f)
-
 
     def __getitem__(self, date):
         if date not in self.weather_forecast:
@@ -82,14 +82,7 @@ class WeatherForecast:
 
 
 input_file = 'fallback.json'
-weather_forecast = WeatherForecast(the_file=input_file)
-weather_forecast.get_result_from_file()
+
+weather_forecast = WeatherForecast(input_file)
 weather_forecast.get_result_from_api()
 weather_forecast.save_result_to_file()
-exit()
-
-
-# weather_forecast[date]  # da odpowiedź na temat pogody dla podanej daty
-# weather_forecast.items()  # zwróci generator tupli w formacie (data, pogoda) dla już zapisanych rezultatów przy wywołaniu
-# weather_forecast  # to iterator zwracający wszystkie daty, dla których znana jest pogoda
-
