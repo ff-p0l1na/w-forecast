@@ -30,12 +30,6 @@ class WeatherForecast:
               f"Europe%2FLondon&start_date={date}" \
               f"&end_date={date}"
         resp = requests.get(url).json()['daily']['rain_sum'][0]
-        if resp > 0:
-            print("Będzie padać.")
-        elif resp == 0:
-            print("Nie będzie padać.")
-        else:
-            print("Nie wiem.")
 
         self.weather_forecast[date] = resp
 
@@ -50,23 +44,22 @@ class WeatherForecast:
 
     def __getitem__(self, date=None):
         today = datetime.date.today()
-        date = date
         if not date:
             date = input("Podaj datę (YYYY-mm-dd): \n")
             if not date:
                 tomorrow = today + datetime.timedelta(days=1)
-                date = tomorrow
+                date = str(tomorrow)
             date_valid = date_pattern.match(str(date))
             if not date_valid:
                 print("Podano nieprawidłową datę. Spróbuj ponownie.\n")
                 return False
-        if date not in self.weather_forecast:
+        if str(date) not in self.weather_forecast:
             api_based_forecast = self.get_result_from_api(date)
             if api_based_forecast:
                 self.save_result_to_file()
-        elif date in self.weather_forecast:
+        elif str(date) in self.weather_forecast:
             weather_forecast.get_result_from_file()
-        return self.weather_forecast[date]
+        return self.weather_forecast[str(date)]
 
     def __setitem__(self, date, rain_sum):
         self.weather_forecast[date] = rain_sum
@@ -84,4 +77,15 @@ class WeatherForecast:
 input_file = 'fallback.json'
 
 weather_forecast = WeatherForecast(input_file)
-weather_forecast.__getitem__()
+check_forecast = weather_forecast.__getitem__()
+if check_forecast > 0:
+    print("Będzie padać.")
+elif check_forecast == 0:
+    print("Nie będzie padać.")
+else:
+    print("Nie wiem :(")
+
+
+
+
+
